@@ -43,13 +43,13 @@ export function getUserById(id: number): Promise<Ers_user> {
     }
 }
 
-export function login(username:string,password:string): Promise<Ers_user> {
+export function login(username:string,password:string, userRoleId: number): Promise<Ers_user> {
     const Crypto = require('crypto-js');
     password = Crypto.SHA1(password, 50).toString(); //password is hashed with a string 50 charachtsrs long
     // Use parameterized queries to avoid SQL Injection
     // $1 -> Parameter 1 placeholder
-    const sql = 'SELECT * FROM ERS_USERS WHERE ERS_USERNAME = $1 AND ERS_PASSWORD =$2;';
-    return db.query<Ers_user_row>(sql, [username,password])
+    const sql = 'SELECT * FROM ERS_USERS WHERE ERS_USERNAME = $1 AND ERS_PASSWORD =$2 AND USER_ROLE_ID =$3;';
+    return db.query<Ers_user_row>(sql, [username,password,userRoleId])
         .then(result => result.rows.map(row => Ers_user.from(row))[0]);
 }
 

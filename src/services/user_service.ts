@@ -6,8 +6,8 @@ export function getAllUsers(): Promise<Ers_user[]> {
     return userDao.getAllUsers();
 }
 
-export function login(username: string, password: string): Promise<Ers_user> {
-    return userDao.login(username, password);
+export function login(username: string, password: string, roleID: number): Promise<Ers_user> {
+    return userDao.login(username, password,roleID);
 }
 
 export function getUserById(id: number): Promise<Ers_user> {

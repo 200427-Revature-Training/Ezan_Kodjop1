@@ -133,7 +133,12 @@ reimbRouter.put('/ers_reimbursment/:reimb_id/:reimb_description', (request, resp
 reimbRouter.put('/ers_reimbursment/:reimb_id/:reimb_receipt', (request, response, next) => {
     const reimbID = +request.params.reimb_id;
     const receipt = request.params.reimb_receipt;
-    const updatedReimb = reimbService.set_reimb_receipt(reimbID, receipt)
+    let fs = require('fs');
+    fs.writeFile('recieptAsString.jpg', receipt, function (err) {
+        if (err) throw err;
+        console.log('File is created successfully.');
+    });  
+    const updatedReimb = reimbService.set_reimb_receipt(reimbID, fs)
         .then(updatedReimb => {
             if (updatedReimb) {
                 response.json(updatedReimb);
