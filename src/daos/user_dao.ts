@@ -168,45 +168,6 @@ export function patchUser(user: Ers_user): Promise<Ers_user> {
         .then(result => result.rows.map(row => Ers_user.from(row))[0]);
 }
 
-export function decline_reimb(reimbID: number, resolvID: number) {// removed ": Promise<Ers_reimbursement>"
-    const sql = `UPDATE ERS_REIMBURSMENT SET REIMB_STATUS_ID = 1 WHERE REIMB_ID = COALESCE($1, INTEGER); \
-        UPDATE ERS_REIMBURSMENT SET REIMB_RESOLVER = COALESCE($2,INTEGER) WHERE REIMB_ID = COALESCE($1,INTEGER); \
-        UPDATE ERS_REIMBURSMENT SET REIMB_RESOLVED = CURRENT_TIMESTAMP() WHERE REIMB_ID = COALESCE($1,INTEGER);`;
-    let reimb = getReimbByID(reimbID).then(reimb => {//What happens when varchar runs out of charachtars??
-        if (!reimb) { return null; }//shows the reimb doesnt exist 
-        else {
-            let user = getUserById(resolvID).then(user => {
-                if (!user) { return null; }//ensure resolver exists
-                else {
-                    let fin = isFinMan(resolvID).then(fin => {
-                        if (!fin) { return null; }
-                        else {
-                            // if we call toISOString on undefined, we get a TypeError, since undefined
-                            // is valid for patch, we guard operator to defend against calling
-                            // .toISOString on undefined, allowing COALESCE to do its job
-                            const reimb_resolved = reimb.reimb_resolved && reimb.reimb_resolved.toISOString();
-                            const params = [
-                                reimb.reimb_id,
-                                reimb.reimb_amount,
-                                reimb.reimb_submitted.toISOString(),
-                                reimb.reimb_resolved.toISOString(),
-                                reimb.reimb_description,
-                                reimb.reimb_receipt,
-                                reimb.reimb_author,
-                                reimb.reimb_resolver,
-                                reimb.reimb_status_id,
-                                reimb.reimb_type_id
-                            ];
-                            return db.query<Ers_reimb_row>(sql, params)
-                                .then(result => result.rows.map(row => Ers_reimbursement.from(row))[0]);
-                        }
-                    })
-                }
-            })
-        }
-    });
-}
-
 export function approve_reimb(reimbID: number, resolvID: number) {// removed ": Promise<Ers_reimbursement>"
     const sql = `UPDATE ERS_REIMBURSMENT SET REIMB_STATUS_ID = 3 WHERE REIMB_ID = COALESCE($1, INTEGER); \
         UPDATE ERS_REIMBURSMENT SET REIMB_RESOLVER = COALESCE($2,INTEGER) WHERE REIMB_ID = COALESCE($1,INTEGER); \

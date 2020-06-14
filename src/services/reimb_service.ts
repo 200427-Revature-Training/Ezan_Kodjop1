@@ -31,6 +31,16 @@ export function getReimbByAuthorID(authorId: number): Promise<Ers_reimbursement>
     return reimbDao.getReimbByAuthorID(authorId);
 }
 
+export function getReimbType(typeId: number): Promise<Ers_reimbursement> {
+    // Apply internal business logic
+    return reimbDao.getReimbType(typeId);
+}
+
+export function getReimbStatus(statId: number): Promise<Ers_reimbursement> {
+    // Apply internal business logic
+    return reimbDao.getReimbStatus(statId);
+}
+
 export function getReimbByResolverID(resolvId: number): Promise<Ers_reimbursement> {
     // Apply internal business logic
     return reimbDao.getReimbByAuthorID(resolvId);
@@ -66,24 +76,13 @@ export function createReimb(reimb: any): Promise<Ers_reimbursement> {
     }
 }
 
+export function decline_reimb(reimbID: number, resolvID: number){
+    return reimbDao.decline_reimb(reimbID,resolvID);
+}
 
-/*export function patchPerson(input: any): Promise<Person> {
-
-    // We don't want to create Date(undefined) so check if input.birthdate
-    // is defined, otherwise just pass undefined along
-    const birthdate = input.birthdate && new Date(input.birthdate);
-
-    const person = new Person(
-        input.id, input.firstName,
-        input.lastName, birthdate
-    );
-
-    if (!person.id) {
-        throw new Error('400');
-    }
-
-    return peopleDao.patchPerson(person);
-}*/
+export function approve_reimb(reimbID: number, resolvID: number){
+    return reimbDao.approve_reimb(reimbID,resolvID);
+}
 
 export function append_reimb_description(reimbID: number, desc: string): Promise<Ers_reimbursement> {
     return reimbDao.append_reimb_description(reimbID, desc);

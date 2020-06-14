@@ -1,5 +1,6 @@
 import { db } from '../daos/db';
 import { Ers_reimbursement, Ers_reimb_row } from '../models/reimbursement';
+import { getUserById, isFinMan } from './user_dao';
 /**
  * If we are using a one-off query for, we can just use db.query - it will have a connection
  * issue the query without having to pull it from the pool.
@@ -47,6 +48,26 @@ export function getReimbByID(reimbId: number): Promise<Ers_reimbursement> {//che
             .then(result => result.rows.map(row => Ers_reimbursement.from(row))[0]);
     }
     else { return null;}
+}
+
+export function getReimbType(reimbTypeID: number): Promise<Ers_reimbursement> {//check to see if user exists first
+    // DO NOT ACTUALLY DO THIS
+    // const sql = 'SELECT * FROM people WHERE id = ' + id;
+    // Use parameterized queries to avoid SQL Injection
+    // $1 -> Parameter 1 placeholder
+    const sql = 'SELECT * FROM ERS_REIMBURSMENT_TYPE WHERE REIMB_TYPE_ID = $1';
+    return db.query<Ers_reimb_row>(sql, [reimbTypeID])
+            .then(result => result.rows.map(row => Ers_reimbursement.from(row))[0]);
+}
+
+export function getReimbStatus(reimbStat: number): Promise<Ers_reimbursement> {//check to see if user exists first
+    // DO NOT ACTUALLY DO THIS
+    // const sql = 'SELECT * FROM people WHERE id = ' + id;
+    // Use parameterized queries to avoid SQL Injection
+    // $1 -> Parameter 1 placeholder
+    const sql = 'SELECT * FROM ERS_REIMBURSMENT_STATUS WHERE REIMB_STATUS_ID = $1';
+    return db.query<Ers_reimb_row>(sql, [reimbStat])
+        .then(result => result.rows.map(row => Ers_reimbursement.from(row))[0]);
 }
 
 /*export function getReimbByAuthorID(authorId: number): Promise<Ers_reimbursement> {
@@ -288,25 +309,83 @@ export function set_reimb_receipt(reimbId: number, receipt: File): Promise<Ers_r
         .then(result => result.rows.map(row => Ers_reimbursement.from(row))[0]);
 }
 
-/*export function patchPerson(person: Person): Promise<Person> {
-    // coalesce(null, 'hello') --> 'hello'
-    // coalesce('hello', 'goodbye') --> 'hello'
+export function decline_reimb(reimbID: number, resolvID: number): any {// removed ": Promise<Ers_reimbursement>"
+    const sql = `UPDATE ERS_REIMBURSMENT SET REIMB_STATUS_ID = 1 WHERE REIMB_ID = COALESCE($1, INTEGER); \
+        UPDATE ERS_REIMBURSMENT SET REIMB_RESOLVER = COALESCE($2,INTEGER) WHERE REIMB_ID = COALESCE($1,INTEGER); \
+        UPDATE ERS_REIMBURSMENT SET REIMB_RESOLVED = CURRENT_TIMESTAMP() WHERE REIMB_ID = COALESCE($1,INTEGER);`;
+    let reimb = getReimbByID(reimbID).then(reimb => {//What happens when varchar runs out of charachtars??
+        if (!reimb) { return null; }//shows the reimb doesnt exist 
+        else {
+            let user = getUserById(resolvID).then(user => {
+                if (!user) { return null; }//ensure resolver exists
+                else {
+                    let fin = isFinMan(resolvID).then(fin => {
+                        if (!fin) { return null; }
+                        else {
+                            // if we call toISOString on undefined, we get a TypeError, since undefined
+                            // is valid for patch, we guard operator to defend against calling
+                            // .toISOString on undefined, allowing COALESCE to do its job
+                            const reimb_resolved = reimb.reimb_resolved && reimb.reimb_resolved.toISOString();
+                            const params = [
+                                reimb.reimb_id,
+                                reimb.reimb_amount,
+                                reimb.reimb_submitted.toISOString(),
+                                reimb.reimb_resolved.toISOString(),
+                                reimb.reimb_description,
+                                reimb.reimb_receipt,
+                                reimb.reimb_author,
+                                reimb.reimb_resolver,
+                                reimb.reimb_status_id,
+                                reimb.reimb_type_id
+                            ];
+                            return db.query<Ers_reimb_row>(sql, params)
+                                .then(result => result.rows.map(row => Ers_reimbursement.from(row))[0]);
+                        }
+                    })
+                }
+            })
+        }
+    });
+}
 
-    const sql = `UPDATE people SET first_name = COALESCE($1, first_name), \
-last_name = COALESCE($2, last_name), birthdate = COALESCE($3, birthdate) \
-WHERE id = $4 RETURNING *`;
-
-    // if we call toISOString on undefined, we get a TypeError, since undefined
-    // is valid for patch, we guard operator to defend against calling
-    // .toISOString on undefined, allowing COALESCE to do its job
-    const birthdate = person.birthdate && person.birthdate.toISOString();
-
-    const params = [person.firstName, person.lastName,
-        birthdate, person.id];
-
-    return db.query<PersonRow>(sql, params)
-        .then(result => result.rows.map(row => Person.from(row))[0]);
-}*/
+export function approve_reimb(reimbID: number, resolvID: number): any {// removed ": Promise<Ers_reimbursement>"
+    const sql = `UPDATE ERS_REIMBURSMENT SET REIMB_STATUS_ID = 3 WHERE REIMB_ID = COALESCE($1, INTEGER); \
+        UPDATE ERS_REIMBURSMENT SET REIMB_RESOLVER = COALESCE($2,INTEGER) WHERE REIMB_ID = COALESCE($1,INTEGER); \
+        UPDATE ERS_REIMBURSMENT SET REIMB_RESOLVED = CURRENT_TIMESTAMP() WHERE REIMB_ID = COALESCE($1,INTEGER);`;
+    let reimb = getReimbByID(reimbID).then(reimb => {//What happens when varchar runs out of charachtars??
+        if (!reimb) { return null; }//shows the reimb doesnt exist 
+        else {
+            let user = getUserById(resolvID).then(user => {
+                if (!user) { return null; }//ensure resolver exists
+                else {
+                    let fin = isFinMan(resolvID).then(fin => {
+                        if (!fin) { return null; }
+                        else {
+                        // if we call toISOString on undefined, we get a TypeError, since undefined
+                        // is valid for patch, we guard operator to defend against calling
+                     // .toISOString on undefined, allowing COALESCE to do its job
+                            const reimb_resolved = reimb.reimb_resolved && reimb.reimb_resolved.toISOString();
+                            const params = [
+                            reimb.reimb_id,
+                            reimb.reimb_amount,
+                            reimb.reimb_submitted.toISOString(),
+                            reimb.reimb_resolved.toISOString(),
+                            reimb.reimb_description,
+                            reimb.reimb_receipt,
+                            reimb.reimb_author,
+                            reimb.reimb_resolver,
+                            reimb.reimb_status_id,
+                            reimb.reimb_type_id
+                        ];
+                        return db.query<Ers_reimb_row>(sql, params)
+                            .then(result => result.rows.map(row => Ers_reimbursement.from(row))[0]);
+                        }
+                    })
+                }
+            })
+        }
+    });
+}
 
 interface Exists {
     exists: boolean;

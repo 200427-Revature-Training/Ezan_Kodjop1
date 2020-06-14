@@ -37,6 +37,36 @@ reimbRouter.get('/:reimb_ID', (request, response, next) => {
     })
 });
 
+reimbRouter.get('/:reimb_type_id', (request, response, next) => {
+    const reimb_type_id = +request.params.id;
+    reimbService.getReimbType(reimb_type_id).then(reimb => {
+        if (!reimb) {
+            response.sendStatus(404);
+        } else {
+            response.json(reimb);
+        }
+        next();
+    }).catch(err => {
+        response.sendStatus(500);
+        next();
+    })
+});
+
+reimbRouter.get('/:reimb_status_id', (request, response, next) => {
+    const reimb_status_id = +request.params.id;
+    reimbService.getReimbStatus(reimb_status_id).then(reimb => {
+        if (!reimb) {
+            response.sendStatus(404);
+        } else {
+            response.json(reimb);
+        }
+        next();
+    }).catch(err => {
+        response.sendStatus(500);
+        next();
+    })
+});
+
 reimbRouter.get('/:reimb_author', (request, response, next) => {
     const reimb_author = +request.params.id;
     reimbService.getReimbByAuthorID(reimb_author).then(reimb => {
@@ -112,7 +142,7 @@ reimbRouter.post('', (request, response, next) => {
 });
 
 /* PATCH is an HTTP method that serves as partial replacement */
-reimbRouter.put('/ers_reimbursment/:reimb_id/:reimb_description', (request, response, next) => {
+reimbRouter.put('/reimb_id/:reimb_description', (request, response, next) => {
     const reimbID = +request.params.reimb_id;
     const desc = request.params.reimb_description;
     const updatedReimb = reimbService.append_reimb_description(reimbID, desc)
@@ -130,7 +160,7 @@ reimbRouter.put('/ers_reimbursment/:reimb_id/:reimb_description', (request, resp
         })
 });
 
-reimbRouter.put('/ers_reimbursment/:reimb_id/:reimb_receipt', (request, response, next) => {
+reimbRouter.put('/:reimb_id/:reimb_receipt', (request, response, next) => {
     const reimbID = +request.params.reimb_id;
     const receipt = request.params.reimb_receipt;
     let fs = require('fs');
@@ -142,6 +172,42 @@ reimbRouter.put('/ers_reimbursment/:reimb_id/:reimb_receipt', (request, response
         .then(updatedReimb => {
             if (updatedReimb) {
                 response.json(updatedReimb);
+                next();
+            } else {
+                response.sendStatus(404);
+                next();
+            }
+        }).catch(err => {
+            response.sendStatus(500);
+            next()
+        })
+});
+
+reimbRouter.put('/:reimb_author/:reimb_status_id', (request, response, next) => {
+    const reimbAuthor = +request.params.reimb_author;
+    const reimbStat = +request.params.reimb_status_id;
+    const approvedReimb = reimbService.approve_reimb(reimbAuthor,reimbStat)
+        .then(approvedReimb => {
+            if (approvedReimb) {
+                response.json(approvedReimb);
+                next();
+            } else {
+                response.sendStatus(404);
+                next();
+            }
+        }).catch(err => {
+            response.sendStatus(500);
+            next()
+        })
+});
+
+reimbRouter.put('/:reimb_author/:reimb_status_id', (request, response, next) => {
+    const reimbAuthor = +request.params.reimb_author;
+    const reimbStat = +request.params.reimb_status_id;
+    const declinedReimb = reimbService.decline_reimb(reimbAuthor,reimbStat)
+        .then(declinedReimb => {
+            if (declinedReimb) {
+                response.json(declinedReimb);
                 next();
             } else {
                 response.sendStatus(404);

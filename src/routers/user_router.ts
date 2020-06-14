@@ -52,7 +52,7 @@ userRouter.get('/:ers_username', (request, response, next) => {
     })
 });
 
-userRouter.get('/ers_users/:ers_username/:ers_password', (request, response, next) => {
+userRouter.get('/:ers_username/:ers_password/:user_role_id', (request, response, next) => {
     const username = request.params.ers_username;
     const password = request.params.ers_password;
     const roleID = +request.params.user_role_id;
@@ -132,3 +132,4 @@ userRouter.patch('', (request, response, next) => {
 
         });
 });
+
